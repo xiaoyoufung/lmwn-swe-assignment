@@ -24,6 +24,10 @@ Clean Architecture and a Modular Monolith (with TypeScript)
 reference. https://medium.com/@mwwtstq/building-a-scalable-express-api-using-clean-architecture-and-a-modular-monolith-with-typescript-c855614b05dc
 
 
+## User Requirements
+
+Full requirements available in machine readable format: [URS.csv](./docs/URS-Full.csv)
+
 ## Features Implemented
 
 ### Core (High Priority)
