@@ -27,22 +27,29 @@ reference. https://medium.com/@mwwtstq/building-a-scalable-express-api-using-cle
 ## Features Implemented
 
 ### Core (High Priority)
-[ ] URS-02: Create new order by adding items and applying discounts (percentage or fixed amount)
-- URS-05: Receive validation errors when entering invalid data (negative prices, empty orders)
-- URS-03: See order totals calculated automatically (subtotal, discount, final total)
-- URS-01: View list of all orders with status and totals
-- URS-06: Change order status through defined workflow throughout lifecycle
-- URS-07: Be prevented from making invalid status transitions (with clear error messages)
-- URS-08: Cancel order from any status (except COMPLETED)
-- URS-12: View daily sales summary showing total orders, total revenue, and average order value
+**Order Management**
+- [ ] Create orders with items and discounts (URS-02)
+- [ ] Automatic total calculation (URS-03)
+- [ ] Input validation with error messages (URS-05)
+- [ ] View order list (URS-01)
+
+**Order Status**
+- [ ] Change status through workflow (URS-06)
+- [ ] Prevent invalid transitions (URS-07)
+- [ ] Cancel orders with reason (URS-08)
+
+**Reporting**
+- [ ] Daily sales summary (URS-12)
 
 ### Supporting (Medium Priority)
-- URS-04: View detailed order information including all items and pricing breakdown
-- URS-09: View complete status change history for any order with timestamps and notes
-- URS-10: Filter order list by status (show only PENDING, CONFIRMED, etc.) 
-- URS-13: View hourly sales breakdown to identify peak business hours
-- URS-14: Select custom date range for sales reports
-- URS-11: See dashboard showing count of orders in each status
+- [ ] Order detail view (URS-04)
+- [ ] Status history audit trail (URS-09)
+- [ ] Filter orders by status (URS-10)
+- [ ] Hourly sales breakdown (URS-13)
+- [ ] Custom date range reports (URS-14)
+
+### Future Enhancements (Low Priority)
+- [ ] Status count dashboard (URS-11)
 
 
 ## Domain Rules
