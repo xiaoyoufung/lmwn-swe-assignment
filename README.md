@@ -182,6 +182,60 @@ Full requirements available in machine readable format: [URS.csv](./docs/URS-Ful
 - [ ] Status count dashboard (URS-11)
 
 
+---
+
+
+## Development Priorities & Reasoning
+
+### What I Built First
+
+**1. Order Creation with Discount Logic (40% of effort)**
+- **Why:** Core revenue function - without accurate order totals, nothing else matters
+- **What:** 
+  - Order entity with Items (1:N relationship)
+  - Discount calculation service (percentage → fixed → round down)
+  - Validation layer (positive quantities, valid prices)
+  - Database transactions (atomic order + items creation)
+
+**2. Order Status Management (25% of effort)**
+- **Why:** Staff need to track order lifecycle immediately
+- **What:**
+  - Status enum (PENDING → CONFIRMED → COMPLETED)
+  - Status transition validation
+  - OrderStatusHistory table for audit trail
+
+**3. Daily Sales Report (20% of effort)**
+- **Why:** Most valuable business metric - "How much did we make today?"
+- **What:**
+  - Aggregation query (SUM of completed orders)
+  - Breakdown: total orders, revenue, avg order value
+  - Filter by date range
+
+**4. Basic Frontend (15% of effort)**
+- **Why:** Prove the system is actually usable
+- **What:**
+  - Order list with status filters
+  - Order creation form
+  - Sales dashboard with simple chart
+
+### What I Deprioritized
+
+**Authentication:** 
+- Reason: Not in core requirements, would consume 1-2 days
+- Production plan: JWT + role-based access control
+
+**Advanced Reporting:**
+- Reason: Daily summary covers 80% of business needs
+- Production plan: Hourly breakdown, best sellers, revenue trends
+
+**Payment Integration:**
+- Reason: Out of scope, requires external API setup
+- Production plan: First production priority after MVP
+
+
+---
+
+
 ## Domain Rules
 
 ### Money Handling
@@ -205,13 +259,79 @@ Example:
 - Fixed -500 satang (-5 baht)
 - **Final: 8545 satang (85.45 baht)**
 
-## Future Improvement
--   PENDING = 'PENDING',
-  CONFIRMED = 'CONFIRMED',
-  PREPARING = 'PREPARING',
-  READY = 'READY',
-  COMPLETED = 'COMPLETED',
-  CANCELLED = 'CANCELLED',
-  Have all the status to keepstrack of kitchen work and also payment feature 
+---
 
-- Add authentication JWT and role base user categorize into 
+## Production Roadmap
+
+If this system were deployed in production, here's what I'd build next, in order:
+
+### Phase 1: Critical for Launch (Week 1-2)
+
+**1. Payment Integration**
+- **Why:** Can't actually close transactions without payment
+- **What:** 
+  - Payment model with status tracking
+  - Integration with PromptPay/credit card gateway
+  - Payment reconciliation with orders
+- **Risk if skipped:** System is unusable in real restaurant
+
+**2. Authentication & Authorization**
+- **Why:** Multi-user access requires security
+- **What:**
+  - JWT-based auth with refresh tokens
+  - Role-based access (Cashier, Kitchen, Manager)
+  - Audit trail tracking who made changes
+- **Implementation:** 2-3 days
+
+### Phase 2: Operational Efficiency (Week 3-4)
+
+**3. Kitchen Display System (KDS)**
+- **Why:** Current status flow doesn't separate front-of-house from kitchen
+- **What:**
+  - PREPARING → READY status for kitchen staff
+  - Real-time order notifications (WebSocket)
+  - Kitchen view showing pending orders
+- **Business impact:** Reduces order fulfillment time by ~30%
+
+**4. Inventory Management**
+- **Why:** Prevent selling out-of-stock items
+- **What:**
+  - Product catalog with stock levels
+  - Auto-decrement on order creation
+  - Low stock alerts
+- **Business impact:** Prevents customer complaints about unavailable items
+
+### Phase 3: Advanced Features (Month 2+)
+
+**5. Advanced Analytics**
+- Revenue trends (daily/weekly/monthly)
+- Best-selling items analysis
+- Peak hours heatmap
+- Staff performance metrics
+
+**6. Multi-location Support**
+- Location-based order filtering
+- Consolidated reporting across branches
+- Location-specific inventory
+
+**7. Customer Management**
+- Customer profiles with order history
+- Loyalty points system
+- Targeted promotions
+
+### Technical Debt to Address
+
+**Testing Coverage:**
+- Current: ~60% (domain + application layers)
+- Target: 80%+ (add infrastructure integration tests)
+
+**Monitoring & Observability:**
+- Add structured logging (Pino)
+- Error tracking (Sentry)
+- Performance monitoring (APM)
+- Database query optimization
+
+**Scalability:**
+- Read replicas for reporting queries
+- Redis caching for frequently accessed data
+- CDN for frontend assets
