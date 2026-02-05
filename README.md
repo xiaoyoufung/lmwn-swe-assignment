@@ -146,9 +146,20 @@ docker-compose logs postgres
 
 - In the future, if we have a Billing module and need independent scaling to extract its service, the clean architecture can make the extraction easier.
 
+---
+
 ## ER Diagram
 ![Alt text](docs/ER-Diagram.svg)
 
+## Database Design
+
+- Snapshotting (itemNameSnapshot, unitPriceMinorSnapshot): This is excellent. Many juniors link directly to the Items table. If the restaurant changes the price of "Fried Rice" next week, old order records would become inaccurate without these snapshots. This directly addresses "financial calculations are always accurate".
+
+- Audit Trail (OrderStatusHistory): This effectively solves the requirement to "identify the root cause quickly". If an order mysteriously gets cancelled, you know exactly who did it and when.
+
+- I added a displayId separate from the UUID because while UUIDs ensure system uniqueness, kitchen staff and customers need short, pronounceable numbers for real-time operations
+
+---
 
 ## User Requirements
 
