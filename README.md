@@ -22,6 +22,14 @@ npm install
 
 - **Express.js** - framework for node.js
 
+## Database: PostgreSQL
+
+- Provides ACID compliance, which is suitable for pos system that prioritizes financial data transactions like Orders + OrderItems + Payments that must be atomic
+
+- Relational database structure has Clear foreign key relationships, so it is more suitable, for example:
+    - Orders have Items (1:N)
+    - Orders have StatusHistory (1:N)
+
 ## Architecture: Clean Architecture and Modular Monolith
 ### Why I choose this approach?
 - It is suitable for a new team building a system from scratch using a Modular monolith. We can reduce operational complexity when compared to microservices.
@@ -88,11 +96,6 @@ Example:
 - 10% discount: -1005 satang (round down 1005.0)
 - Fixed -500 satang (-5 baht)
 - **Final: 8545 satang (85.45 baht)**
-
-## Database: PostgreSQL
-
-
-
 
 ## Future Improvement
 -   PENDING = 'PENDING',
