@@ -78,3 +78,14 @@ Example:
 - 10% discount: -1005 satang (round down 1005.0)
 - Fixed -500 satang (-5 baht)
 - **Final: 8545 satang (85.45 baht)**
+
+## Future Improvement
+-   PENDING = 'PENDING',
+  CONFIRMED = 'CONFIRMED',
+  PREPARING = 'PREPARING',
+  READY = 'READY',
+  COMPLETED = 'COMPLETED',
+  CANCELLED = 'CANCELLED',
+  Have all the status to keepstrack of kitchen work and also payment feature 
+
+- Add authentication JWT and role base user categorize into 
