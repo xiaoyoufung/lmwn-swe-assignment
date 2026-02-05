@@ -24,9 +24,9 @@ export class OrderRepositoryPrisma implements IOrderRepository {
   }
 
   async findByOrderNumber(orderNumber: string): Promise<Order | null> {
-    const data = await prisma.order.findUnique({
-      where: { orderNumber },
-      include: { items: true },
+    const data = await prisma.orders.findUnique({
+      where: { orderId: orderNumber },
+      include: { orderItems: true },
     });
 
     if (!data) return null;
@@ -35,10 +35,10 @@ export class OrderRepositoryPrisma implements IOrderRepository {
   }
 
   async findAll(filters?: OrderFilters): Promise<Order[]> {
-    const data = await prisma.order.findMany({
+    const data = await prisma.orders.findMany({
       where: {
         status: filters?.status,
-        orderNumber: filters?.orderNumber,
+        orderId: filters?.orderNumber,
         createdAt: filters?.dateRange
           ? {
               gte: filters.dateRange.from,
@@ -46,7 +46,7 @@ export class OrderRepositoryPrisma implements IOrderRepository {
             }
           : undefined,
       },
-      include: { items: true },
+      include: { orderItems: true },
       orderBy: { createdAt: 'desc' },
     });
 
@@ -80,7 +80,7 @@ export class OrderRepositoryPrisma implements IOrderRepository {
   async create(order: Order): Promise<void> {
     await prisma.$transaction(async (tx) => {
       // Create order
-      await tx.order.create({
+      await tx.orders.create({
         data: {
           id: order.id,
           orderNumber: order.orderNumber,

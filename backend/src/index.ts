@@ -6,8 +6,6 @@ import { registerDependencies } from './infrastructure/di/container';
 import { prisma } from './infrastructure/database';
 import orderRoutes from './modules/order/infrastructure/order.routes';
 
-
-
 const app = express();
 
 app.use(express.json());
@@ -27,9 +25,7 @@ app.use((err: Error, req: express.Request, res: express.Response, next: express.
   });
 });
 
-const PORT = process.env.PORT || 3000;
-
-console.log("DATABASE_URL exists?", !!process.env.DATABASE_URL);
+const PORT = process.env.PORT || 3200;
 
 app.listen(PORT, () => {
   console.log(`Server running on port ${PORT}`);
@@ -40,3 +36,4 @@ process.on('SIGTERM', async () => {
   await prisma.$disconnect();
   process.exit(0);
 });
+

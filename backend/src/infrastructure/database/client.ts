@@ -3,7 +3,6 @@ import { PrismaPg } from "@prisma/adapter-pg";
 import { getLogger } from "../../core/logging/logger.js";
 
 function createPrismaClient() {
-    console.log("DATABASE_URL exists?", !!process.env.DATABASE_URL);
   const connectionString = process.env.DATABASE_URL;
   if (!connectionString) {
     throw new Error("DATABASE_URL is not set");
