@@ -1,16 +1,18 @@
 import { OrderItem } from './order-item.entity';
 import { OrderStatus, OrderStatusTransition } from './order-status.enum';
-import { Discount } from './discount.value-object';
+import { AppliedDiscount } from './applied-discount.value-object.ts';
 
 export class Order {
   constructor(
-    public readonly id: string,
-    public readonly orderNumber: string,
+    public readonly orderId: string,  // Changed from 'id' to match schema
+    public readonly restaurantId: string,
+    public readonly tableId: string | null,
+    public readonly createdByUserId: string,
     private _items: OrderItem[],
-    private _discount: Discount | null,
+    private _appliedDiscounts: AppliedDiscount[],  // Changed from single discount to array
     private _status: OrderStatus,
     public readonly createdAt: Date,
-    public readonly updatedAt: Date,
+    private _updatedAt: Date,
   ) {
     this.validate();
   }
@@ -23,25 +25,32 @@ export class Order {
     return [...this._items];
   }
 
-  get discount(): Discount | null {
-    return this._discount;
+  get appliedDiscounts(): ReadonlyArray<AppliedDiscount> {
+    return [...this._appliedDiscounts];
   }
 
   get status(): OrderStatus {
     return this._status;
   }
 
-  get subtotal(): number {
-    return this._items.reduce((sum, item) => sum + item.lineTotal, 0);
+  get updatedAt(): Date {
+    return this._updatedAt;
   }
 
-  get discountAmount(): number {
-    if (!this._discount) return 0;
-    return this._discount.calculateDiscount(this.subtotal);
+  // All monetary values in minor units (cents/satang)
+  get subtotalMinor(): number {
+    return this._items.reduce((sum, item) => sum + item.lineTotalMinor, 0);
   }
 
-  get total(): number {
-    return Math.max(0, this.subtotal - this.discountAmount);
+  get discountTotalMinor(): number {
+    return this._appliedDiscounts.reduce(
+      (sum, discount) => sum + discount.appliedAmountMinor,
+      0
+    );
+  }
+
+  get totalMinor(): number {
+    return Math.max(0, this.subtotalMinor - this.discountTotalMinor);
   }
 
   get itemCount(): number {
@@ -58,28 +67,30 @@ export class Order {
     }
 
     const existingItem = this._items.find(
-      (i) => i.productId === item.productId,
+      (i) => i.itemId === item.itemId,
     );
 
     if (existingItem) {
       // Increase quantity of existing item
       const updatedItem = existingItem.increaseQuantity(item.quantity);
       this._items = this._items.map((i) =>
-        i.productId === item.productId ? updatedItem : i,
+        i.itemId === item.itemId ? updatedItem : i,
       );
     } else {
       this._items.push(item);
     }
+    
+    this._updatedAt = new Date();
   }
 
-  removeItem(itemId: string): void {
+  removeItem(orderItemId: string): void {
     if (this._status !== OrderStatus.PENDING) {
       throw new Error('Cannot remove items from non-pending order');
     }
 
-    const index = this._items.findIndex((i) => i.id === itemId);
+    const index = this._items.findIndex((i) => i.orderItemId === orderItemId);
     if (index === -1) {
-      throw new Error(`Item ${itemId} not found in order`);
+      throw new Error(`Item ${orderItemId} not found in order`);
     }
 
     this._items.splice(index, 1);
@@ -87,43 +98,68 @@ export class Order {
     if (this._items.length === 0) {
       throw new Error('Order must have at least one item');
     }
+    
+    this._updatedAt = new Date();
   }
 
-  updateItemQuantity(itemId: string, quantity: number): void {
+  updateItemQuantity(orderItemId: string, quantity: number): void {
     if (this._status !== OrderStatus.PENDING) {
       throw new Error('Cannot update items in non-pending order');
     }
 
-    const item = this._items.find((i) => i.id === itemId);
+    const item = this._items.find((i) => i.orderItemId === orderItemId);
     if (!item) {
-      throw new Error(`Item ${itemId} not found in order`);
+      throw new Error(`Item ${orderItemId} not found in order`);
     }
 
     const updatedItem = item.updateQuantity(quantity);
-    this._items = this._items.map((i) => (i.id === itemId ? updatedItem : i));
+    this._items = this._items.map((i) => 
+      (i.orderItemId === orderItemId ? updatedItem : i)
+    );
+    
+    this._updatedAt = new Date();
   }
 
-  applyDiscount(discount: Discount): void {
+  applyDiscount(discount: AppliedDiscount): void {
     if (this._status !== OrderStatus.PENDING) {
       throw new Error('Cannot apply discount to non-pending order');
     }
 
-    this._discount = discount;
+    this._appliedDiscounts.push(discount);
+    this._updatedAt = new Date();
   }
 
-  removeDiscount(): void {
+  removeDiscount(discountId: string): void {
     if (this._status !== OrderStatus.PENDING) {
       throw new Error('Cannot remove discount from non-pending order');
     }
 
-    this._discount = null;
+    const index = this._appliedDiscounts.findIndex(
+      (d) => d.discountId === discountId
+    );
+    
+    if (index === -1) {
+      throw new Error(`Discount ${discountId} not found in order`);
+    }
+
+    this._appliedDiscounts.splice(index, 1);
+    this._updatedAt = new Date();
+  }
+
+  clearDiscounts(): void {
+    if (this._status !== OrderStatus.PENDING) {
+      throw new Error('Cannot clear discounts from non-pending order');
+    }
+
+    this._appliedDiscounts = [];
+    this._updatedAt = new Date();
   }
 
   // ============================================
   // Status Management
   // ============================================
 
-  changeStatus(newStatus: OrderStatus, reason?: string): void {
+  changeStatus(newStatus: OrderStatus): void {
     if (!this.canTransitionTo(newStatus)) {
       throw new Error(
         `Invalid status transition from ${this._status} to ${newStatus}`,
@@ -131,6 +167,7 @@ export class Order {
     }
 
     this._status = newStatus;
+    this._updatedAt = new Date();
   }
 
   canTransitionTo(newStatus: OrderStatus): boolean {
@@ -142,12 +179,8 @@ export class Order {
     this.changeStatus(OrderStatus.CONFIRMED);
   }
 
-  prepare(): void {
-    this.changeStatus(OrderStatus.PREPARING);
-  }
-
-  ready(): void {
-    this.changeStatus(OrderStatus.READY);
+  pending(): void {
+    this.changeStatus(OrderStatus.PENDING);
   }
 
   complete(): void {
@@ -167,19 +200,27 @@ export class Order {
   // ============================================
 
   private validate(): void {
-    if (!this.orderNumber || this.orderNumber.trim().length === 0) {
-      throw new Error('Order number is required');
+    if (!this.orderId || this.orderId.trim().length === 0) {
+      throw new Error('Order ID is required');
+    }
+
+    if (!this.restaurantId || this.restaurantId.trim().length === 0) {
+      throw new Error('Restaurant ID is required');
+    }
+
+    if (!this.createdByUserId || this.createdByUserId.trim().length === 0) {
+      throw new Error('Created by user ID is required');
     }
 
     if (!this._items || this._items.length === 0) {
       throw new Error('Order must have at least one item');
     }
 
-    if (this.subtotal < 0) {
+    if (this.subtotalMinor < 0) {
       throw new Error('Subtotal cannot be negative');
     }
 
-    if (this.total < 0) {
+    if (this.totalMinor < 0) {
       throw new Error('Total cannot be negative');
     }
   }
@@ -189,16 +230,20 @@ export class Order {
   // ============================================
 
   static create(
-    id: string,
-    orderNumber: string,
+    orderId: string,
+    restaurantId: string,
+    tableId: string | null,
+    createdByUserId: string,
     items: OrderItem[],
-    discount: Discount | null = null,
+    appliedDiscounts: AppliedDiscount[] = [],
   ): Order {
     return new Order(
-      id,
-      orderNumber,
+      orderId,
+      restaurantId,
+      tableId,
+      createdByUserId,
       items,
-      discount,
+      appliedDiscounts,
       OrderStatus.PENDING,
       new Date(),
       new Date(),
@@ -206,19 +251,23 @@ export class Order {
   }
 
   static reconstitute(
-    id: string,
-    orderNumber: string,
+    orderId: string,
+    restaurantId: string,
+    tableId: string | null,
+    createdByUserId: string,
     items: OrderItem[],
-    discount: Discount | null,
+    appliedDiscounts: AppliedDiscount[],
     status: OrderStatus,
     createdAt: Date,
     updatedAt: Date,
   ): Order {
     return new Order(
-      id,
-      orderNumber,
+      orderId,
+      restaurantId,
+      tableId,
+      createdByUserId,
       items,
-      discount,
+      appliedDiscounts,
       status,
       createdAt,
       updatedAt,
@@ -230,6 +279,6 @@ export class Order {
   // ============================================
 
   equals(other: Order): boolean {
-    return this.id === other.id;
+    return this.orderId === other.orderId;
   }
 }

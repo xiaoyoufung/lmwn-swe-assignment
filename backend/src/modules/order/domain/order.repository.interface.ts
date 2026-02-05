@@ -3,6 +3,7 @@ import { OrderStatus } from "./order-status.enum";
 import { Order } from "./order.entity";
 
 export interface OrderFilters {
+  restaurantId?: string;  // Added to support multi-restaurant filtering
   status?: OrderStatus;
   dateRange?: {
     from: Date;
@@ -14,7 +15,6 @@ export interface OrderFilters {
 export interface IOrderRepository {
   // Queries
   findById(id: string): Promise<Order | null>;
-  findByOrderNumber(orderNumber: string): Promise<Order | null>;
   findAll(filters?: OrderFilters): Promise<Order[]>;
   getStatusHistory(orderId: string): Promise<OrderStatusHistory[]>;
 
@@ -24,10 +24,11 @@ export interface IOrderRepository {
   updateStatus(
     orderId: string,
     newStatus: OrderStatus,
-    reason?: string,
+    changedByUserId: string,
+    notes?: string,       
   ): Promise<void>;
 
   // Statistics
   countByStatus(status: OrderStatus): Promise<number>;
-  getTotalSales(from: Date, to: Date): Promise<number>;
+  getTotalSales(restaurantId: string, from: Date, to: Date): Promise<number>;
 }

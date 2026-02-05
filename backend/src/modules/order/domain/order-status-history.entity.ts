@@ -4,11 +4,11 @@ export class OrderStatusHistory {
   constructor(
     public readonly id: string,
     public readonly orderId: string,
-    public readonly fromStatus: OrderStatus | null,
-    public readonly toStatus: OrderStatus,
-    public readonly reason: string | null,
+    public readonly fromStatus: string | null, 
+    public readonly toStatus: string,
+    public readonly notes: string | null,  
     public readonly changedAt: Date,
-    public readonly changedBy: string | null, // Future: user ID
+    public readonly changedByUserId: string, 
   ) {
     this.validate();
   }
@@ -22,8 +22,17 @@ export class OrderStatusHistory {
       throw new Error('Order ID is required');
     }
 
-    if (this.toStatus === OrderStatus.CANCELLED && !this.reason) {
-      throw new Error('Reason is required for cancellation');
+    if (!this.toStatus || this.toStatus.trim().length === 0) {
+      throw new Error('To status is required');
+    }
+
+    if (!this.changedByUserId || this.changedByUserId.trim().length === 0) {
+      throw new Error('Changed by user ID is required');
+    }
+
+    // Optional: Validate that cancellations have notes
+    if (this.toStatus === OrderStatus.CANCELLED && !this.notes) {
+      throw new Error('Notes are required for cancellation');
     }
   }
 
@@ -34,19 +43,47 @@ export class OrderStatusHistory {
   static create(
     id: string,
     orderId: string,
-    fromStatus: OrderStatus | null,
-    toStatus: OrderStatus,
-    reason: string | null = null,
-    changedBy: string | null = null,
+    fromStatus: string | null,
+    toStatus: string,
+    changedByUserId: string,
+    notes: string | null = null,
   ): OrderStatusHistory {
     return new OrderStatusHistory(
       id,
       orderId,
       fromStatus,
       toStatus,
-      reason,
+      notes,
       new Date(),
-      changedBy,
+      changedByUserId,
     );
+  }
+
+  static reconstitute(
+    id: string,
+    orderId: string,
+    fromStatus: string | null,
+    toStatus: string,
+    notes: string | null,
+    changedAt: Date,
+    changedByUserId: string,
+  ): OrderStatusHistory {
+    return new OrderStatusHistory(
+      id,
+      orderId,
+      fromStatus,
+      toStatus,
+      notes,
+      changedAt,
+      changedByUserId,
+    );
+  }
+
+  // ============================================
+  // Equality
+  // ============================================
+
+  equals(other: OrderStatusHistory): boolean {
+    return this.id === other.id;
   }
 }

@@ -1,10 +1,11 @@
 export class OrderItem {
   constructor(
-    public readonly id: string,
-    public readonly productId: string,
-    public readonly productName: string,
+    public readonly orderItemId: string,  // Changed from 'id' to match schema
+    public readonly orderId: string,
+    public readonly itemId: string,       // Changed from 'productId' to match schema
+    public readonly itemNameSnapshot: string,  // Changed from 'productName' to match schema
     public readonly quantity: number,
-    public readonly unitPrice: number, // in satang (smallest currency unit)
+    public readonly unitPriceMinorSnapshot: number,  // Changed from 'unitPrice' and added 'Minor'
   ) {
     this.validate();
   }
@@ -13,8 +14,17 @@ export class OrderItem {
   // Getters
   // ============================================
 
-  get lineTotal(): number {
-    return this.quantity * this.unitPrice;
+  get lineSubtotalMinor(): number {
+    return this.quantity * this.unitPriceMinorSnapshot;
+  }
+
+  get lineDiscountMinor(): number {
+    // Line-level discounts can be added here in the future
+    return 0;
+  }
+
+  get lineTotalMinor(): number {
+    return this.lineSubtotalMinor - this.lineDiscountMinor;
   }
 
   // ============================================
@@ -27,11 +37,12 @@ export class OrderItem {
     }
 
     return new OrderItem(
-      this.id,
-      this.productId,
-      this.productName,
+      this.orderItemId,
+      this.orderId,
+      this.itemId,
+      this.itemNameSnapshot,
       this.quantity + amount,
-      this.unitPrice,
+      this.unitPriceMinorSnapshot,
     );
   }
 
@@ -46,11 +57,12 @@ export class OrderItem {
     }
 
     return new OrderItem(
-      this.id,
-      this.productId,
-      this.productName,
+      this.orderItemId,
+      this.orderId,
+      this.itemId,
+      this.itemNameSnapshot,
       newQuantity,
-      this.unitPrice,
+      this.unitPriceMinorSnapshot,
     );
   }
 
@@ -60,11 +72,12 @@ export class OrderItem {
     }
 
     return new OrderItem(
-      this.id,
-      this.productId,
-      this.productName,
+      this.orderItemId,
+      this.orderId,
+      this.itemId,
+      this.itemNameSnapshot,
       newQuantity,
-      this.unitPrice,
+      this.unitPriceMinorSnapshot,
     );
   }
 
@@ -73,19 +86,19 @@ export class OrderItem {
   // ============================================
 
   private validate(): void {
-    if (!this.productId || this.productId.trim().length === 0) {
-      throw new Error('Product ID is required');
+    if (!this.itemId || this.itemId.trim().length === 0) {
+      throw new Error('Item ID is required');
     }
 
-    if (!this.productName || this.productName.trim().length === 0) {
-      throw new Error('Product name is required');
+    if (!this.itemNameSnapshot || this.itemNameSnapshot.trim().length === 0) {
+      throw new Error('Item name is required');
     }
 
     if (this.quantity < 1) {
       throw new Error('Quantity must be at least 1');
     }
 
-    if (this.unitPrice < 0) {
+    if (this.unitPriceMinorSnapshot < 0) {
       throw new Error('Unit price cannot be negative');
     }
   }
@@ -95,13 +108,21 @@ export class OrderItem {
   // ============================================
 
   static create(
-    id: string,
-    productId: string,
-    productName: string,
+    orderItemId: string,
+    orderId: string,
+    itemId: string,
+    itemNameSnapshot: string,
     quantity: number,
-    unitPrice: number,
+    unitPriceMinorSnapshot: number,
   ): OrderItem {
-    return new OrderItem(id, productId, productName, quantity, unitPrice);
+    return new OrderItem(
+      orderItemId,
+      orderId,
+      itemId,
+      itemNameSnapshot,
+      quantity,
+      unitPriceMinorSnapshot,
+    );
   }
 
   // ============================================
@@ -109,6 +130,6 @@ export class OrderItem {
   // ============================================
 
   equals(other: OrderItem): boolean {
-    return this.id === other.id;
+    return this.orderItemId === other.orderItemId;
   }
 }

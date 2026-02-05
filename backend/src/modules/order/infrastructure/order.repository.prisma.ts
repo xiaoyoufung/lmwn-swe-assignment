@@ -4,7 +4,7 @@ import { Order } from '../domain/order.entity';
 import { OrderItem } from '../domain/order-item.entity';
 import { OrderStatus } from '../domain/order-status.enum';
 import { OrderStatusHistory } from '../domain/order-status-history.entity';
-import { Discount, DiscountType } from '../domain/discount.value-object';
+import { AppliedDiscount, DiscountType } from '../domain/applied-discount.value-object';
 import { OrderFilters } from '../domain/order.repository.interface';
 
 export class OrderRepositoryPrisma implements IOrderRepository {
@@ -12,21 +12,13 @@ export class OrderRepositoryPrisma implements IOrderRepository {
   // Queries
   // ============================================
 
-  async findById(id: string): Promise<Order | null> {
-    const data = await prisma.order.findUnique({
-      where: { id },
-      include: { items: true },
-    });
-
-    if (!data) return null;
-
-    return this.toDomain(data);
-  }
-
-  async findByOrderNumber(orderNumber: string): Promise<Order | null> {
+  async findById(orderId: string): Promise<Order | null> {
     const data = await prisma.orders.findUnique({
-      where: { orderId: orderNumber },
-      include: { orderItems: true },
+      where: { orderId },
+      include: { 
+        orderItems: true,
+        orderDiscounts: true,
+      },
     });
 
     if (!data) return null;
@@ -37,6 +29,7 @@ export class OrderRepositoryPrisma implements IOrderRepository {
   async findAll(filters?: OrderFilters): Promise<Order[]> {
     const data = await prisma.orders.findMany({
       where: {
+        restaurantId: filters?.restaurantId,
         status: filters?.status,
         orderId: filters?.orderNumber,
         createdAt: filters?.dateRange
@@ -46,7 +39,10 @@ export class OrderRepositoryPrisma implements IOrderRepository {
             }
           : undefined,
       },
-      include: { orderItems: true },
+      include: { 
+        orderItems: true,
+        orderDiscounts: true,
+      },
       orderBy: { createdAt: 'desc' },
     });
 
@@ -59,17 +55,16 @@ export class OrderRepositoryPrisma implements IOrderRepository {
       orderBy: { changedAt: 'asc' },
     });
 
-    return data.map(
-      (d) =>
-        new OrderStatusHistory(
-          d.id,
-          d.orderId,
-          d.fromStatus as OrderStatus | null,
-          d.toStatus as OrderStatus,
-          d.reason,
-          d.changedAt,
-          d.changedBy
-        )
+    return data.map((d) =>
+      OrderStatusHistory.reconstitute(
+        d.id,
+        d.orderId,
+        d.fromStatus,
+        d.toStatus,
+        d.notes,
+        d.changedAt,
+        d.changedByUserId
+      )
     );
   }
 
@@ -82,14 +77,14 @@ export class OrderRepositoryPrisma implements IOrderRepository {
       // Create order
       await tx.orders.create({
         data: {
-          id: order.id,
-          orderNumber: order.orderNumber,
-          subtotal: order.subtotal,
-          discountAmount: order.discountAmount,
-          total: order.total,
-          discountType: order.discount?.type,
-          discountValue: order.discount?.value,
+          orderId: order.orderId,
+          restaurantId: order.restaurantId,
+          tableId: order.tableId,
+          createdByUserId: order.createdByUserId,
           status: order.status,
+          subtotalMinor: order.subtotalMinor,
+          discountTotalMinor: order.discountTotalMinor,
+          totalMinor: order.totalMinor,
           createdAt: order.createdAt,
           updatedAt: order.updatedAt,
         },
@@ -97,15 +92,32 @@ export class OrderRepositoryPrisma implements IOrderRepository {
 
       // Create order items
       if (order.items.length > 0) {
-        await tx.orderItem.createMany({
+        await tx.orderItems.createMany({
           data: order.items.map((item) => ({
-            id: item.id,
-            orderId: order.id,
-            productId: item.productId,
-            productName: item.productName,
+            orderItemId: item.orderItemId,
+            orderId: order.orderId,
+            itemId: item.itemId,
+            itemNameSnapshot: item.itemNameSnapshot,
             quantity: item.quantity,
-            unitPrice: item.unitPrice,
-            lineTotal: item.lineTotal,
+            unitPriceMinorSnapshot: item.unitPriceMinorSnapshot,
+            lineSubtotalMinor: item.lineSubtotalMinor,
+            lineDiscountMinor: item.lineDiscountMinor,
+            lineTotalMinor: item.lineTotalMinor,
+          })),
+        });
+      }
+
+      // Create order discounts
+      if (order.appliedDiscounts.length > 0) {
+        await tx.orderDiscounts.createMany({
+          data: order.appliedDiscounts.map((discount) => ({
+            orderDiscountId: discount.orderDiscountId,
+            orderId: order.orderId,
+            discountId: discount.discountId,
+            type: discount.type,
+            value: discount.value,
+            appliedAmountMinor: discount.appliedAmountMinor,
+            createdAt: discount.createdAt,
           })),
         });
       }
@@ -113,10 +125,12 @@ export class OrderRepositoryPrisma implements IOrderRepository {
       // Create initial status history
       await tx.orderStatusHistory.create({
         data: {
-          orderId: order.id,
-          fromStatus: null,
+          orderId: order.orderId,
+          fromStatus: order.status,
           toStatus: order.status,
-          reason: 'Order created',
+          notes: 'Order created',
+          changedByUserId: order.createdByUserId,
+          changedAt: order.createdAt,
         },
       });
     });
@@ -125,35 +139,53 @@ export class OrderRepositoryPrisma implements IOrderRepository {
   async update(order: Order): Promise<void> {
     await prisma.$transaction(async (tx) => {
       // Update order
-      await tx.order.update({
-        where: { id: order.id },
+      await tx.orders.update({
+        where: { orderId: order.orderId },
         data: {
-          subtotal: order.subtotal,
-          discountAmount: order.discountAmount,
-          total: order.total,
-          discountType: order.discount?.type,
-          discountValue: order.discount?.value,
           status: order.status,
-          updatedAt: new Date(),
+          subtotalMinor: order.subtotalMinor,
+          discountTotalMinor: order.discountTotalMinor,
+          totalMinor: order.totalMinor,
+          updatedAt: order.updatedAt,
         },
       });
 
-      // Delete existing items
-      await tx.orderItem.deleteMany({
-        where: { orderId: order.id },
+      // Delete existing items and recreate
+      await tx.orderItems.deleteMany({
+        where: { orderId: order.orderId },
       });
 
-      // Recreate items
       if (order.items.length > 0) {
-        await tx.orderItem.createMany({
+        await tx.orderItems.createMany({
           data: order.items.map((item) => ({
-            id: item.id,
-            orderId: order.id,
-            productId: item.productId,
-            productName: item.productName,
+            orderItemId: item.orderItemId,
+            orderId: order.orderId,
+            itemId: item.itemId,
+            itemNameSnapshot: item.itemNameSnapshot,
             quantity: item.quantity,
-            unitPrice: item.unitPrice,
-            lineTotal: item.lineTotal,
+            unitPriceMinorSnapshot: item.unitPriceMinorSnapshot,
+            lineSubtotalMinor: item.lineSubtotalMinor,
+            lineDiscountMinor: item.lineDiscountMinor,
+            lineTotalMinor: item.lineTotalMinor,
+          })),
+        });
+      }
+
+      // Delete existing discounts and recreate
+      await tx.orderDiscounts.deleteMany({
+        where: { orderId: order.orderId },
+      });
+
+      if (order.appliedDiscounts.length > 0) {
+        await tx.orderDiscounts.createMany({
+          data: order.appliedDiscounts.map((discount) => ({
+            orderDiscountId: discount.orderDiscountId,
+            orderId: order.orderId,
+            discountId: discount.discountId,
+            type: discount.type,
+            value: discount.value,
+            appliedAmountMinor: discount.appliedAmountMinor,
+            createdAt: discount.createdAt,
           })),
         });
       }
@@ -163,14 +195,17 @@ export class OrderRepositoryPrisma implements IOrderRepository {
   async updateStatus(
     orderId: string,
     newStatus: OrderStatus,
-    reason?: string
+    changedByUserId: string,
+    notes?: string
   ): Promise<void> {
     await prisma.$transaction(async (tx) => {
-      const order = await tx.order.findUniqueOrThrow({ where: { id: orderId } });
+      const order = await tx.orders.findUniqueOrThrow({ 
+        where: { orderId } 
+      });
 
       // Update order status
-      await tx.order.update({
-        where: { id: orderId },
+      await tx.orders.update({
+        where: { orderId },
         data: {
           status: newStatus,
           updatedAt: new Date(),
@@ -183,7 +218,9 @@ export class OrderRepositoryPrisma implements IOrderRepository {
           orderId,
           fromStatus: order.status,
           toStatus: newStatus,
-          reason,
+          notes,
+          changedByUserId,
+          changedAt: new Date(),
         },
       });
     });
@@ -194,26 +231,27 @@ export class OrderRepositoryPrisma implements IOrderRepository {
   // ============================================
 
   async countByStatus(status: OrderStatus): Promise<number> {
-    return await prisma.order.count({
+    return await prisma.orders.count({
       where: { status },
     });
   }
 
-  async getTotalSales(from: Date, to: Date): Promise<number> {
-    const result = await prisma.order.aggregate({
+  async getTotalSales(restaurantId: string, from: Date, to: Date): Promise<number> {
+    const result = await prisma.orders.aggregate({
       where: {
-        status: OrderStatus.COMPLETED,
+        restaurantId,
+        status: OrderStatus.CONFIRMED,
         createdAt: {
           gte: from,
           lte: to,
         },
       },
       _sum: {
-        total: true,
+        totalMinor: true,
       },
     });
 
-    return result._sum.total || 0;
+    return result._sum.totalMinor || 0;
   }
 
   // ============================================
@@ -221,27 +259,38 @@ export class OrderRepositoryPrisma implements IOrderRepository {
   // ============================================
 
   private toDomain(data: any): Order {
-    const items = data.items.map(
-      (item: any) =>
-        new OrderItem(
-          item.id,
-          item.productId,
-          item.productName,
-          item.quantity,
-          item.unitPrice
-        )
+    // Map order items
+    const items = (data.orderItems || []).map((item: any) =>
+      OrderItem.create(
+        item.orderItemId,
+        item.orderId,
+        item.itemId,
+        item.itemNameSnapshot,
+        item.quantity,
+        item.unitPriceMinorSnapshot
+      )
     );
 
-    const discount =
-      data.discountType && data.discountValue
-        ? new Discount(data.discountType as DiscountType, data.discountValue)
-        : null;
+    // Map applied discounts
+    const appliedDiscounts = (data.orderDiscounts || []).map((discount: any) =>
+      AppliedDiscount.reconstitute(
+        discount.orderDiscountId,
+        discount.orderId,
+        discount.discountId,
+        discount.type as DiscountType,
+        discount.value,
+        discount.appliedAmountMinor,
+        discount.createdAt
+      )
+    );
 
     return Order.reconstitute(
-      data.id,
-      data.orderNumber,
+      data.orderId,
+      data.restaurantId,
+      data.tableId,
+      data.createdByUserId,
       items,
-      discount,
+      appliedDiscounts,
       data.status as OrderStatus,
       data.createdAt,
       data.updatedAt

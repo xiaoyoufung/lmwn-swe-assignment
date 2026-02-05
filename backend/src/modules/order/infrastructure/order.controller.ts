@@ -15,13 +15,29 @@ export class OrderController {
       res.status(201).json({
         success: true,
         data: {
-          id: order.id,
-          orderNumber: order.orderNumber,
-          subtotal: order.subtotal,
-          discountAmount: order.discountAmount,
-          total: order.total,
+          orderId: order.orderId,  // Changed from 'id'
+          restaurantId: order.restaurantId,
+          tableId: order.tableId,
+          subtotalMinor: order.subtotalMinor,  // Changed from 'subtotal'
+          discountTotalMinor: order.discountTotalMinor,  // Changed from 'discountAmount'
+          totalMinor: order.totalMinor,  // Changed from 'total'
           status: order.status,
-          items: order.items,
+          items: order.items.map(item => ({
+            orderItemId: item.orderItemId,
+            itemId: item.itemId,
+            itemNameSnapshot: item.itemNameSnapshot,
+            quantity: item.quantity,
+            unitPriceMinorSnapshot: item.unitPriceMinorSnapshot,
+            lineTotalMinor: item.lineTotalMinor,
+          })),
+          appliedDiscounts: order.appliedDiscounts.map(discount => ({
+            orderDiscountId: discount.orderDiscountId,
+            discountId: discount.discountId,
+            type: discount.type,
+            value: discount.value,
+            appliedAmountMinor: discount.appliedAmountMinor,
+          })),
+          createdAt: order.createdAt,
         },
       });
     } catch (error) {
@@ -37,14 +53,30 @@ export class OrderController {
       res.status(200).json({
         success: true,
         data: {
-          id: order.id,
-          orderNumber: order.orderNumber,
-          subtotal: order.subtotal,
-          discountAmount: order.discountAmount,
-          total: order.total,
+          orderId: order.orderId,  // Changed from 'id'
+          restaurantId: order.restaurantId,
+          tableId: order.tableId,
+          subtotalMinor: order.subtotalMinor,  // Changed from 'subtotal'
+          discountTotalMinor: order.discountTotalMinor,  // Changed from 'discountAmount'
+          totalMinor: order.totalMinor,  // Changed from 'total'
           status: order.status,
-          items: order.items,
+          items: order.items.map(item => ({
+            orderItemId: item.orderItemId,
+            itemId: item.itemId,
+            itemNameSnapshot: item.itemNameSnapshot,
+            quantity: item.quantity,
+            unitPriceMinorSnapshot: item.unitPriceMinorSnapshot,
+            lineTotalMinor: item.lineTotalMinor,
+          })),
+          appliedDiscounts: order.appliedDiscounts.map(discount => ({
+            orderDiscountId: discount.orderDiscountId,
+            discountId: discount.discountId,
+            type: discount.type,
+            value: discount.value,
+            appliedAmountMinor: discount.appliedAmountMinor,
+          })),
           createdAt: order.createdAt,
+          updatedAt: order.updatedAt,
         },
       });
     } catch (error) {
@@ -60,11 +92,23 @@ export class OrderController {
       res.status(200).json({
         success: true,
         data: orders.map((order) => ({
-          id: order.id,
-          orderNumber: order.orderNumber,
-          total: order.total,
+          orderId: order.orderId,  // Changed from 'id'
+          restaurantId: order.restaurantId,
+          tableId: order.tableId,
+          subtotalMinor: order.subtotalMinor,
+          discountTotalMinor: order.discountTotalMinor,
+          totalMinor: order.totalMinor,
           status: order.status,
           createdAt: order.createdAt,
+          itemCount: order.itemCount,  // Useful summary field
+          items: order.items.map(item => ({  // Fixed syntax error - was missing closing braces
+            orderItemId: item.orderItemId,
+            itemId: item.itemId,  // Changed from 'productId'
+            itemNameSnapshot: item.itemNameSnapshot,  // Changed from 'name'
+            quantity: item.quantity,
+            unitPriceMinorSnapshot: item.unitPriceMinorSnapshot,
+            lineTotalMinor: item.lineTotalMinor,
+          })),
         })),
       });
     } catch (error) {
@@ -78,14 +122,16 @@ export class OrderController {
       const order = await useCase.execute({
         orderId: req.params.id,
         newStatus: req.body.status,
-        reason: req.body.reason,
+        changedByUserId: req.body.changedByUserId,  // Changed from 'reason' - this is required
+        notes: req.body.notes,  // Changed from 'reason' to 'notes'
       });
 
       res.status(200).json({
         success: true,
         data: {
-          id: order.id,
+          orderId: order.orderId,  // Changed from 'id'
           status: order.status,
+          updatedAt: order.updatedAt,
         },
       });
     } catch (error) {
@@ -96,13 +142,18 @@ export class OrderController {
   static async cancel(req: Request, res: Response, next: NextFunction) {
     try {
       const useCase = Container.get<CancelOrder>('CancelOrderUseCase');
-      const order = await useCase.execute(req.params.id, req.body.reason);
+      const order = await useCase.execute({
+        orderId: req.params.id,
+        changedByUserId: req.body.changedByUserId,  // Added - required for audit
+        reason: req.body.reason,
+      });
 
       res.status(200).json({
         success: true,
         data: {
-          id: order.id,
+          orderId: order.orderId,  // Changed from 'id'
           status: order.status,
+          updatedAt: order.updatedAt,
         },
       });
     } catch (error) {
