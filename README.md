@@ -21,8 +21,10 @@ Devops
 ## Architecture: Clean Architecture and Modular Monolith
 ### Why I choose this approach?
 - It is suitable for a new team building a system from scratch using a Modular monolith. We can reduce operational complexity when compared to microservices.
-- As we're building a POS system, the system that has clearly bounded contexts like the order module, the billing module, and the reporting module, which can extend by themselves within the monolith
-- In the future, if we have a Billing module and need independent scaling to extract its service, the clean architecture can make the extraction easier
+
+- As we're building a POS system, the system that has clearly bounded contexts like the order module, the billing module, and the reporting module, which can extend by themselves within the monolith.
+
+- In the future, if we have a Billing module and need independent scaling to extract its service, the clean architecture can make the extraction easier.
 
 ## ER Diagram
 ![Alt text](docs/ER-Diagram.svg)
@@ -82,6 +84,11 @@ Example:
 - 10% discount: -1005 satang (round down 1005.0)
 - Fixed -500 satang (-5 baht)
 - **Final: 8545 satang (85.45 baht)**
+
+## Database: PostgreSQL
+
+
+
 
 ## Future Improvement
 -   PENDING = 'PENDING',
