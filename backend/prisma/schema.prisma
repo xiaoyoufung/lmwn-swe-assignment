@@ -76,8 +76,8 @@ model Orders {
   orderId           String              @id @default(uuid()) @map("order_id") @db.Uuid
   restaurantId     String              @map("restaurant_id") @db.Uuid
   restaurant       Restaurants        @relation(fields: [restaurantId], references: [restaurantId])
-  tableId           String              @map("table_id") @db.Uuid
-  table             Tables              @relation(fields: [tableId], references: [tableId])
+  tableId           String?              @map("table_id") @db.Uuid
+  table             Tables?              @relation(fields: [tableId], references: [tableId])
   status            String              @db.VarChar // CREATED, CONFIRMED, PAID, CANCELLED
   subtotalMinor    Int                 @map("subtotal_minor")
   discountTotalMinor Int                 @map("discount_total_minor")

@@ -64,6 +64,7 @@ Full requirements available in machine readable format: [URS.csv](./docs/URS-Ful
 - Display layer converts to decimal (e.g., 10050 → 100.50 baht)
 
 ### Order Lifecycle
+CREATED, CONFIRMED, PAID, CANCELLED
 PENDING → CONFIRMED → PREPARING → READY → COMPLETED
          ↓
     CANCELLED (allowed from any state)
