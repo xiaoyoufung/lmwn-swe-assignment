@@ -1,4 +1,4 @@
-# Intern - Software Engineer (Node.js) Assignment
+# POS System - LINE MAN Wongnai
 
 ##  Run project
 
@@ -18,13 +18,14 @@ Backend
 Devops
 - Docker
 
-## Architecture 
-**Clean Architecture** and a **Modular Monolith**
-[Ref.](https://medium.com/@mwwtstq/building-a-scalable-express-api-using-clean-architecture-and-a-modular-monolith-with-typescript-c855614b05dc)<br>
-Modular monolith: one deployment with multiple independent business modules, and each module also has its own domain logic, which can expose its own use cases and manage its own infrastructure, and also communicates with other modules through internal public APIs.<br>
-I choose this approach because it's structured, testable, and scalable.
+## Architecture: Clean Architecture and Modular Monolith
+### Why this choice?
+- It is suitable for a new team building a system from scratch using a Modular monolith. We can reduce operational complexity when compared to microservices.
+- As we're building a POS system, the system that has clearly bounded contexts like the order module, the billing module, and the reporting module, which can extend by themselves within the monolith
+- In the future, if we have a Billing module and need independent scaling to extract its service, the clean architecture can make the extraction easier
 
 ## ER Diagram
+![Alt text](docs/ER-Diagram.csv)
 
 
 ## User Requirements
