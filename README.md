@@ -57,7 +57,9 @@
    - API Health: http://localhost:3000/health
    - Prisma Studio: `docker-compose exec backend npx prisma studio`
 
-## Technology Choices
+---
+
+## Technology Stack
 ### Frontend
 
 - **Vite**: Fast development server.
