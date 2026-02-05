@@ -12,18 +12,19 @@ Frontend
 - Vite + React.js + Tailwind.css
 
 Backend
-- TypeScript
 - Prisma - seeding initial database data
-- Express.js
+- Express.js - framework for node.js
 
 Devops
 - Docker
 
 ## Architecture 
-Clean Architecture and a Modular Monolith
-[Ref.](https://medium.com/@mwwtstq/building-a-scalable-express-api-using-clean-architecture-and-a-modular-monolith-with-typescript-c855614b05dc)
-Modular monolith: one deployment, multiple independent business modules, I choose this approch because it's structured, testable and scalable.
+**Clean Architecture** and a **Modular Monolith**
+[Ref.](https://medium.com/@mwwtstq/building-a-scalable-express-api-using-clean-architecture-and-a-modular-monolith-with-typescript-c855614b05dc)<br>
+Modular monolith: one deployment with multiple independent business modules, and each module also has its own domain logic, which can expose its own use cases and manage its own infrastructure, and also communicates with other modules through internal public APIs.<br>
+I choose this approach because it's structured, testable, and scalable.
 
+## ER Diagram
 
 
 ## User Requirements
