@@ -67,6 +67,10 @@
     - Orders have Items (1:N)
     - Orders have StatusHistory (1:N)
 
+- Support complex reporting queries (JOIN orders + items + discounts)
+
+---
+
 ## Architecture: Clean Architecture and Modular Monolith
 ### Why I choose this approach?
 - It is suitable for a new team building a system from scratch using a Modular monolith. We can reduce operational complexity when compared to microservices.
