@@ -448,7 +448,7 @@ async function main() {
       restaurantId: restaurant1.restaurantId,
       createdByUserId: manager1.userId,
       tableId: allTables[7].tableId, // VIP Room
-      status: 'PAID',
+      status: 'COMPLETED',
       subtotalMinor: order2Subtotal,
       discountTotalMinor: order2DiscountTotal,
       totalMinor: order2Total,
@@ -525,7 +525,7 @@ async function main() {
       restaurantId: restaurant1.restaurantId,
       createdByUserId: cashier1.userId,
       tableId: allTables[5].tableId, // Patio A
-      status: 'CREATED',
+      status: 'PENDING',
       subtotalMinor: order3Subtotal,
       discountTotalMinor: order3DiscountTotal,
       totalMinor: order3Total,
@@ -595,7 +595,7 @@ async function main() {
     data: [
       {
         orderId: order2.orderId,
-        fromStatus: 'CREATED',
+        fromStatus: 'PENDING',
         toStatus: 'CONFIRMED',
         changedByUserId: manager1.userId,
         changedAt: new Date(Date.now() - 60 * 60 * 1000), // 1 hour ago
@@ -604,7 +604,7 @@ async function main() {
       {
         orderId: order2.orderId,
         fromStatus: 'CONFIRMED',
-        toStatus: 'PAID',
+        toStatus: 'COMPLETED',
         changedByUserId: cashier1.userId,
         changedAt: new Date(Date.now() - 30 * 60 * 1000), // 30 minutes ago
         notes: 'Payment received - Cash',

@@ -20,8 +20,10 @@ Devops
 - Docker
 
 ## Architecture 
-Clean Architecture and a Modular Monolith (with TypeScript)
-reference. https://medium.com/@mwwtstq/building-a-scalable-express-api-using-clean-architecture-and-a-modular-monolith-with-typescript-c855614b05dc
+Clean Architecture and a Modular Monolith
+[Ref.](https://medium.com/@mwwtstq/building-a-scalable-express-api-using-clean-architecture-and-a-modular-monolith-with-typescript-c855614b05dc)
+Modular monolith: one deployment, multiple independent business modules, I choose this approch because it's structured, testable and scalable.
+
 
 
 ## User Requirements
