@@ -7,16 +7,20 @@
 npm install
 ```
 
-## Technology
-Frontend
-- Vite + React.js + Tailwind.css
+## Technology Choices
+### Frontend
 
-Backend
-- Prisma - seeding initial database data
-- Express.js - framework for node.js
+- **Vite**: Fast development server.
 
-Devops
-- Docker
+- **React**: More familiar with and have large ecosystem
+
+- **Tailwind**: Fast UI development with consistent design
+
+### Backend
+
+- **Prisma** - seeding initial database data
+
+- **Express.js** - framework for node.js
 
 ## Architecture: Clean Architecture and Modular Monolith
 ### Why I choose this approach?
