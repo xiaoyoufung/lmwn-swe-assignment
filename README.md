@@ -18,7 +18,7 @@
 
 1. **Clone and setup**
 ```bash
-   git clone <your-repo-url>
+   git clone https://github.com/xiaoyoufung/lmwn-pos-system.git
    cd pos-system
    cp .env.example .env
 ```
