@@ -9,7 +9,7 @@ export enum OrderStatus {
 
 export interface OrderItem {
   id: string
-  name: string
+  itemNameSnapshot: string
   quantity: number
   unitPrice: number // satang
   totalPrice: number // satang
@@ -27,21 +27,23 @@ export interface OrderStatusHistory {
 
 export interface Order {
   id: string
-  orderNumber: string
+  restaurantId: string
+  tableNumber: number
   subtotalAmount: number // satang
   discountAmount: number // satang
-  totalAmount: number // satang
+  totalMinor: number // satang
   status: OrderStatus
   items: OrderItem[]
   statusHistory?: OrderStatusHistory[]
   notes?: string
   createdAt: string
   updatedAt: string
+  itemsCount: number
 }
 
 export interface CreateOrderInput {
   items: Array<{
-    name: string
+    itemNameSnapshot: string
     quantity: number
     unitPrice: number
   }>

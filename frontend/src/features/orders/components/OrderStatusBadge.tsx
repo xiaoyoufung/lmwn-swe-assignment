@@ -5,10 +5,9 @@ interface OrderStatusBadgeProps {
   status: OrderStatus
 }
 
-const statusConfig: Record<
-  OrderStatus,
-  { variant: 'default' | 'link' | 'secondary' | 'destructive' | 'outline' | 'ghost'; label: string }
-> = {
+type BadgeVariant = 'default' | 'secondary' | 'destructive' | 'outline' | 'link' | 'ghost'
+
+const statusConfig: Record<OrderStatus, { variant: BadgeVariant; label: string }> = {
   [OrderStatus.PENDING]: { variant: 'secondary', label: 'Pending' },
   [OrderStatus.CONFIRMED]: { variant: 'default', label: 'Confirmed' },
   [OrderStatus.PREPARING]: { variant: 'default', label: 'Preparing' },
@@ -18,15 +17,7 @@ const statusConfig: Record<
 }
 
 export default function OrderStatusBadge({ status }: OrderStatusBadgeProps) {
-  const config = statusConfig[status]
-  // Map custom variants to allowed Badge variants
-  const variantMap: Record<string, 'default' | 'link' | 'secondary' | 'destructive' | 'outline' | 'ghost'> = {
-    success: 'default',
-    warning: 'secondary',
-    danger: 'destructive',
-    info: 'default',
-    default: 'default',
-  }
-  const badgeVariant = variantMap[config.variant] ?? 'default'
-  return <Badge variant={badgeVariant}>{config.label}</Badge>
+  const config = statusConfig[status] ?? { variant: 'outline' as const, label: 'Unknown' }
+  
+  return <Badge variant={config.variant}>{config.label}</Badge>
 }

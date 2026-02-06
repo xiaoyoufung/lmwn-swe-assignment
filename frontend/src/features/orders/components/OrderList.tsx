@@ -13,6 +13,9 @@ export default function OrderList() {
   const [statusFilter, setStatusFilter] = useState<OrderStatus | undefined>()
   const { data: orders, isLoading } = useOrders(statusFilter)
 
+  console.log('Orders data:', orders)
+  console.log('Status filter:', statusFilter)
+
   if (isLoading) return <LoadingState />
 
   return (
