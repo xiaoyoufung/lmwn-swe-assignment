@@ -1,10 +1,11 @@
 import { Button } from "@/components/ui/button";
+import OrderList from "@/features/orders/components/OrderList";
 import { CirclePlus } from "lucide-react";
 
 const Dashboard = () => {
     return (
         <main>
-          <header>
+          {/* <header>
           <div className="flex justify-between items-center">
             <h1 className="text-3xl font-bold tracking-tight text-gray-900">Dashboard</h1>
             <Button className="mt-4">
@@ -12,7 +13,8 @@ const Dashboard = () => {
                 New Order
             </Button>
           </div>
-        </header>
+        </header> */}
+        <OrderList />
         </main>
         
     )
